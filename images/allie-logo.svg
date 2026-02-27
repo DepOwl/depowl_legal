@@ -1,0 +1,45 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Owl body -->
+  <ellipse cx="100" cy="120" rx="60" ry="70" fill="#8B4513" stroke="#654321" stroke-width="2"/>
+  
+  <!-- Owl head -->
+  <circle cx="100" cy="70" r="50" fill="#A0522D" stroke="#654321" stroke-width="2"/>
+  
+  <!-- Ear tufts -->
+  <path d="M 70 40 L 65 20 L 75 35 Z" fill="#654321"/>
+  <path d="M 130 40 L 135 20 L 125 35 Z" fill="#654321"/>
+  
+  <!-- Eyes (white background) -->
+  <circle cx="80" cy="70" r="18" fill="#FFFFFF" stroke="#333" stroke-width="2"/>
+  <circle cx="120" cy="70" r="18" fill="#FFFFFF" stroke="#333" stroke-width="2"/>
+  
+  <!-- Pupils -->
+  <circle cx="80" cy="70" r="8" fill="#1a1a1a"/>
+  <circle cx="120" cy="70" r="8" fill="#1a1a1a"/>
+  
+  <!-- Eye shine -->
+  <circle cx="83" cy="67" r="3" fill="#FFFFFF"/>
+  <circle cx="123" cy="67" r="3" fill="#FFFFFF"/>
+  
+  <!-- Glasses frame -->
+  <circle cx="80" cy="70" r="20" fill="none" stroke="#2C2C2C" stroke-width="3"/>
+  <circle cx="120" cy="70" r="20" fill="none" stroke="#2C2C2C" stroke-width="3"/>
+  
+  <!-- Bridge of glasses -->
+  <path d="M 100 65 Q 100 62 100 65" stroke="#2C2C2C" stroke-width="2" fill="none"/>
+  
+  <!-- Temples of glasses -->
+  <line x1="60" y1="70" x2="45" y2="68" stroke="#2C2C2C" stroke-width="3"/>
+  <line x1="140" y1="70" x2="155" y2="68" stroke="#2C2C2C" stroke-width="3"/>
+  
+  <!-- Beak -->
+  <path d="M 100 80 L 95 90 L 105 90 Z" fill="#FFA500" stroke="#654321" stroke-width="1"/>
+  
+  <!-- Wings -->
+  <ellipse cx="50" cy="130" rx="20" ry="35" fill="#654321" opacity="0.7"/>
+  <ellipse cx="150" cy="130" rx="20" ry="35" fill="#654321" opacity="0.7"/>
+  
+  <!-- Feet -->
+  <path d="M 85 185 L 80 195 M 85 185 L 85 195 M 85 185 L 90 195" stroke="#FFA500" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 115 185 L 110 195 M 115 185 L 115 195 M 115 185 L 120 195" stroke="#FFA500" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Environment — do not commit secrets to GitHub, GitLab, etc.
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+
+# Supabase CLI local artifacts (also see supabase/.gitignore)
+supabase/.branches
+supabase/.temp
+supabase/.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

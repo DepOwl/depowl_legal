@@ -18,7 +18,10 @@ export default defineConfig([
     rules: {
       'react-refresh/only-export-components': [
         'error',
-        { allowConstantExport: true, allowExportNames: ['buttonVariants'] },
+        {
+          allowConstantExport: true,
+          allowExportNames: ['buttonVariants', 'signUpFormSchema'],
+        },
       ],
     },
     languageOptions: {

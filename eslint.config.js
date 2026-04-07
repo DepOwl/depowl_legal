@@ -20,7 +20,7 @@ export default defineConfig([
         'error',
         {
           allowConstantExport: true,
-          allowExportNames: ['buttonVariants', 'signUpFormSchema'],
+          allowExportNames: ['buttonVariants', 'signUpFormSchema', 'useSidebar'],
         },
       ],
     },

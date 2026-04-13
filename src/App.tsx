@@ -9,6 +9,7 @@ import {
   DashboardCreateRoute,
   DashboardHelpRoute,
   DashboardJobsRoute,
+  DashboardUploadErrataRoute,
 } from '@/components/Dashboard'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -58,6 +59,7 @@ function App() {
           <Route index element={<DashboardJobsRoute />} />
           <Route path="create" element={<DashboardCreateRoute />} />
           <Route path="all-jobs" element={<DashboardAllJobsRoute />} />
+          <Route path="upload-errata" element={<DashboardUploadErrataRoute />} />
           <Route path="help" element={<DashboardHelpRoute />} />
         </Route>
         <Route

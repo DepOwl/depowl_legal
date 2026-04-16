@@ -62,6 +62,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  ArrowPathIcon,
+  ArrowUpTrayIcon,
+  CheckCircleIcon,
+  StarIcon,
+} from '@heroicons/react/24/outline'
 import { fetchCurrentUserIsAdmin } from '@/lib/admin'
 import {
   MAX_JOB_PDF_BYTES,
@@ -94,6 +100,33 @@ function formatDateCell(value: string | null): string {
 function formatTranscriptSizeKb(value: number | null): string {
   if (value == null) return '—'
   return `${(value / 1024).toFixed(2)} KB`
+}
+
+function StatusIcon({ status }: { status: string }) {
+  const normalized = status.toLowerCase()
+  if (normalized === 'uploaded') {
+    return <ArrowUpTrayIcon className="size-4 text-chart-3" aria-label="uploaded" />
+  }
+  if (normalized === 'in_progress') {
+    return (
+      <ArrowPathIcon
+        className="size-4 animate-spin text-chart-1"
+        aria-label="in progress"
+      />
+    )
+  }
+  if (normalized === 'complete' || normalized === 'completed') {
+    return <StarIcon className="size-4 text-chart-3" aria-label="complete" />
+  }
+  if (normalized === 'ready_for_download') {
+    return (
+      <CheckCircleIcon
+        className="size-4 text-chart-2"
+        aria-label="ready for download"
+      />
+    )
+  }
+  return <span className="text-xs">{status}</span>
 }
 
 const pdfFileSchema = z
@@ -381,7 +414,7 @@ function JobsTablePanel({
   onRetry: () => void
 }) {
   return (
-    <Card>
+    <Card className="w-full md:w-3/4">
       <CardHeader>
         <CardTitle>Jobs</CardTitle>
         <CardDescription>
@@ -405,7 +438,7 @@ function JobsTablePanel({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Status</TableHead>
+                <TableHead className="w-16 text-center">Status</TableHead>
                 <TableHead>Transcript name</TableHead>
                 <TableHead>Transcript size</TableHead>
                 <TableHead>Created</TableHead>
@@ -416,7 +449,11 @@ function JobsTablePanel({
             <TableBody>
               {jobs.map((job) => (
                 <TableRow key={job.id}>
-                  <TableCell>{job.status}</TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center justify-center">
+                      <StatusIcon status={job.status} />
+                    </span>
+                  </TableCell>
                   <TableCell className="max-w-[12rem] truncate">
                     {job.transcript_name}
                   </TableCell>
@@ -461,7 +498,7 @@ function AllJobsTablePanel() {
   }, [load])
 
   return (
-    <Card>
+    <Card className="w-full md:w-3/4">
       <CardHeader>
         <CardTitle>All jobs</CardTitle>
         <CardDescription>
@@ -488,7 +525,7 @@ function AllJobsTablePanel() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Owner</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-16 text-center">Status</TableHead>
                   <TableHead>Transcript name</TableHead>
                   <TableHead>Transcript size</TableHead>
                   <TableHead>Created</TableHead>
@@ -502,7 +539,11 @@ function AllJobsTablePanel() {
                     <TableCell className="max-w-[10rem] truncate text-xs">
                       {job.owner_email ?? `${job.user_id.slice(0, 8)}…`}
                     </TableCell>
-                    <TableCell>{job.status}</TableCell>
+                    <TableCell className="text-center">
+                      <span className="inline-flex items-center justify-center">
+                        <StatusIcon status={job.status} />
+                      </span>
+                    </TableCell>
                     <TableCell className="max-w-[12rem] truncate">
                       {job.transcript_name}
                     </TableCell>
@@ -562,7 +603,7 @@ function UploadErrataPanel() {
   })
 
   return (
-    <Card className="max-w-lg">
+    <Card className="w-full md:w-3/4">
       <CardHeader>
         <CardTitle>Upload errata PDF</CardTitle>
         <CardDescription>
@@ -721,7 +762,7 @@ function CreateJobPanel({
   })
 
   return (
-    <Card className="max-w-lg">
+    <Card className="w-full md:w-3/4">
       <CardHeader>
         <CardTitle>New job</CardTitle>
         <CardDescription>
@@ -834,7 +875,7 @@ function HelpPanel({ userEmail }: { userEmail: string }) {
   const [sending, setSending] = useState(false)
 
   return (
-    <Card className="max-w-lg">
+    <Card className="w-full md:w-3/4">
       <CardHeader>
         <CardTitle>Request help</CardTitle>
         <CardDescription>

@@ -31,7 +31,7 @@ export async function fetchMyJobs(userId: string): Promise<JobListRow[]> {
   const { data, error } = await supabase
     .from('jobs')
     .select(
-      'id,status,transcript_name,transcript_size,created_at,due_date,ready_date',
+      'id,status,transcript_name,transcript_size,created_at,due_date,ready_date,ready_estimate_date,errata_path',
     )
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
@@ -47,7 +47,7 @@ export async function fetchAllJobs(): Promise<AdminJobListRow[]> {
   const { data, error } = await supabase
     .from('jobs')
     .select(
-      'id,status,transcript_name,transcript_size,created_at,due_date,ready_date,user_id',
+      'id,status,transcript_name,transcript_size,created_at,due_date,ready_date,ready_estimate_date,errata_path,user_id',
     )
     .order('created_at', { ascending: false })
 
@@ -224,4 +224,20 @@ export async function uploadErrataForJob(input: UploadErrataInput): Promise<void
     await supabase.storage.from(bucket).remove([objectPath])
     throw new Error(updateError.message)
   }
+}
+
+export async function getErrataDownloadUrl(
+  errataPath: string,
+): Promise<string> {
+  const supabase = getSupabase()
+  const bucket = getErrataBucket()
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(errataPath, 60 * 10)
+
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message ?? 'Could not create a download URL.')
+  }
+
+  return data.signedUrl
 }

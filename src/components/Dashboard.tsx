@@ -55,6 +55,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -74,6 +79,7 @@ import {
   createJob,
   fetchAllJobs,
   fetchMyJobs,
+  getErrataDownloadUrl,
   uploadErrataForJob,
 } from '@/lib/jobs'
 import { getSupabase } from '@/lib/supabase'
@@ -102,29 +108,54 @@ function formatTranscriptSizeKb(value: number | null): string {
   return `${(value / 1024).toFixed(2)} KB`
 }
 
+const hoverStatusSchema = z.enum([
+  'uploaded',
+  'in_progress',
+  'ready_for_download',
+])
+
+type HoverStatus = z.infer<typeof hoverStatusSchema>
+
+const HOVER_STATUS_LABELS: Record<HoverStatus, string> = {
+  uploaded: 'Uploaded',
+  in_progress: 'Processing',
+  ready_for_download: 'Ready for Download',
+}
+
+function getStatusHoverLabel(status: string): string {
+  const parsed = hoverStatusSchema.safeParse(status.toLowerCase())
+  if (parsed.success) return HOVER_STATUS_LABELS[parsed.data]
+  return status
+}
+
 function StatusIcon({ status }: { status: string }) {
   const normalized = status.toLowerCase()
+  const label = getStatusHoverLabel(status)
+
+  function withTooltip(icon: React.ReactNode) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex items-center justify-center" aria-label={label}>
+            {icon}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top">{label}</TooltipContent>
+      </Tooltip>
+    )
+  }
+
   if (normalized === 'uploaded') {
-    return <ArrowUpTrayIcon className="size-4 text-chart-3" aria-label="uploaded" />
+    return withTooltip(<ArrowUpTrayIcon className="size-4 text-chart-3" />)
   }
   if (normalized === 'in_progress') {
-    return (
-      <ArrowPathIcon
-        className="size-4 animate-spin text-chart-1"
-        aria-label="in progress"
-      />
-    )
+    return withTooltip(<ArrowPathIcon className="size-4 animate-spin text-chart-1" />)
   }
   if (normalized === 'complete' || normalized === 'completed') {
     return <StarIcon className="size-4 text-chart-3" aria-label="complete" />
   }
   if (normalized === 'ready_for_download') {
-    return (
-      <CheckCircleIcon
-        className="size-4 text-chart-2"
-        aria-label="ready for download"
-      />
-    )
+    return withTooltip(<CheckCircleIcon className="size-4 text-chart-2" />)
   }
   return <span className="text-xs">{status}</span>
 }
@@ -413,6 +444,23 @@ function JobsTablePanel({
   error: string | null
   onRetry: () => void
 }) {
+  const [downloadingJobId, setDownloadingJobId] = useState<number | null>(null)
+
+  async function handleDownload(job: JobListRow) {
+    if (!job.errata_path) return
+    setDownloadingJobId(job.id)
+    try {
+      const url = await getErrataDownloadUrl(job.errata_path)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not download errata.'
+      toast.error('Download failed', { description: msg })
+    } finally {
+      setDownloadingJobId(null)
+    }
+  }
+
+  // Jobs table
   return (
     <Card className="w-full md:w-3/4">
       <CardHeader>
@@ -443,7 +491,9 @@ function JobsTablePanel({
                 <TableHead>Transcript size</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Due</TableHead>
+                <TableHead>Ready Est.</TableHead>
                 <TableHead>Ready</TableHead>
+                <TableHead>Download Errata</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -462,7 +512,26 @@ function JobsTablePanel({
                   </TableCell>
                   <TableCell>{formatDateCell(job.created_at)}</TableCell>
                   <TableCell>{formatDateCell(job.due_date)}</TableCell>
+                  <TableCell>
+                    {formatDateCell(job.ready_estimate_date)}
+                  </TableCell>
                   <TableCell>{formatDateCell(job.ready_date)}</TableCell>
+                  <TableCell>
+                    {job.status.toLowerCase() === 'ready_for_download' &&
+                    job.errata_path ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void handleDownload(job)}
+                        disabled={downloadingJobId === job.id}
+                      >
+                        {downloadingJobId === job.id ? 'Preparing…' : 'Download Errata'}
+                      </Button>
+                    ) : (
+                      '—'
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -477,6 +546,7 @@ function AllJobsTablePanel() {
   const [jobs, setJobs] = useState<AdminJobListRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [downloadingJobId, setDownloadingJobId] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -497,6 +567,21 @@ function AllJobsTablePanel() {
     void load()
   }, [load])
 
+  async function handleDownload(job: AdminJobListRow) {
+    if (!job.errata_path) return
+    setDownloadingJobId(job.id)
+    try {
+      const url = await getErrataDownloadUrl(job.errata_path)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not download errata.'
+      toast.error('Download failed', { description: msg })
+    } finally {
+      setDownloadingJobId(null)
+    }
+  }
+
+  // All jobs table
   return (
     <Card className="w-full md:w-3/4">
       <CardHeader>
@@ -530,7 +615,9 @@ function AllJobsTablePanel() {
                   <TableHead>Transcript size</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Due</TableHead>
+                  <TableHead>Ready Est.</TableHead>
                   <TableHead>Ready</TableHead>
+                  <TableHead>Download Errata</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -552,7 +639,26 @@ function AllJobsTablePanel() {
                     </TableCell>
                     <TableCell>{formatDateCell(job.created_at)}</TableCell>
                     <TableCell>{formatDateCell(job.due_date)}</TableCell>
+                    <TableCell>
+                      {formatDateCell(job.ready_estimate_date)}
+                    </TableCell>
                     <TableCell>{formatDateCell(job.ready_date)}</TableCell>
+                    <TableCell>
+                      {job.status.toLowerCase() === 'ready_for_download' &&
+                      job.errata_path ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => void handleDownload(job)}
+                          disabled={downloadingJobId === job.id}
+                        >
+                          {downloadingJobId === job.id ? 'Preparing…' : 'Download Errata'}
+                        </Button>
+                      ) : (
+                        '—'
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -602,8 +708,9 @@ function UploadErrataPanel() {
     },
   })
 
+  // Upload errata form
   return (
-    <Card className="w-full md:w-3/4">
+    <Card className="w-full max-w-3xl">
       <CardHeader>
         <CardTitle>Upload errata PDF</CardTitle>
         <CardDescription>
@@ -761,8 +868,9 @@ function CreateJobPanel({
     },
   })
 
+  // Create job form
   return (
-    <Card className="w-full md:w-3/4">
+    <Card className="w-full max-w-3xl">
       <CardHeader>
         <CardTitle>New job</CardTitle>
         <CardDescription>
@@ -874,8 +982,9 @@ function HelpPanel({ userEmail }: { userEmail: string }) {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
 
+  // Help form
   return (
-    <Card className="w-full md:w-3/4">
+    <Card className="w-full max-w-3xl">
       <CardHeader>
         <CardTitle>Request help</CardTitle>
         <CardDescription>

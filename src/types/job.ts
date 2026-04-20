@@ -7,6 +7,8 @@ export type JobListRow = {
   created_at: string
   due_date: string
   ready_date: string | null
+  ready_estimate_date: string | null
+  errata_path: string | null
 }
 
 /** Admin “all jobs” list: job row plus owner email when `users` is readable. */

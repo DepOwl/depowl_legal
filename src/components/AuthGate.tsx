@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card'
 import { Field, FieldContent, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { logAuditEventFromClient } from '@/lib/auditLogs'
 import { getSupabase } from '@/lib/supabase'
 
 export function AuthGate() {
@@ -32,6 +33,13 @@ export function AuthGate() {
       })
       if (signInError) {
         setError(signInError.message)
+      } else {
+        void logAuditEventFromClient({
+          action: 'auth.sign_in',
+          table_name: 'auth.users',
+          record_id: null,
+          ip_address: null,
+        })
       }
     } finally {
       setLoading(false)

@@ -6,6 +6,7 @@ import { AuthGate } from '@/components/AuthGate'
 import {
   Dashboard,
   DashboardAllJobsRoute,
+  DashboardAuditLogsRoute,
   DashboardCreateRoute,
   DashboardHelpRoute,
   DashboardJobsRoute,
@@ -59,6 +60,7 @@ function App() {
           <Route index element={<DashboardJobsRoute />} />
           <Route path="create" element={<DashboardCreateRoute />} />
           <Route path="all-jobs" element={<DashboardAllJobsRoute />} />
+          <Route path="audit-logs" element={<DashboardAuditLogsRoute />} />
           <Route path="upload-errata" element={<DashboardUploadErrataRoute />} />
           <Route path="help" element={<DashboardHelpRoute />} />
         </Route>

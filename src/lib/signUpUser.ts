@@ -75,46 +75,10 @@ export async function signUpWithUserProfile(
   if (roleId) row.role_id = roleId
 
   if (!authData.session) {
-    // #region agent log
-    fetch('http://127.0.0.1:7526/ingest/05c8c926-486e-44f5-bcb6-b8f2be1f9f29', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8f4d06' },
-      body: JSON.stringify({
-        sessionId: '8f4d06',
-        runId: 'run1',
-        hypothesisId: 'H3a',
-        location: 'signUpUser.ts:no-session',
-        message: 'no session; skipping users insert',
-        data: {},
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {})
-    // #endregion
     return { needsEmailConfirmation: true }
   }
 
   const { error: insertError } = await supabase.from('users').insert(row)
-
-  // #region agent log
-  fetch('http://127.0.0.1:7526/ingest/05c8c926-486e-44f5-bcb6-b8f2be1f9f29', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8f4d06' },
-    body: JSON.stringify({
-      sessionId: '8f4d06',
-      runId: 'run1',
-      hypothesisId: 'H3',
-      location: 'signUpUser.ts:after-users-insert',
-      message: 'public.users insert completed',
-      data: {
-        hasInsertError: !!insertError,
-        insertMsg: insertError?.message?.slice(0, 200) ?? null,
-        insertCode: insertError?.code ?? null,
-        hasRoleIdEnv: Boolean(roleId),
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {})
-  // #endregion
 
   if (insertError) {
     throw new Error(friendlyError(insertError.message))

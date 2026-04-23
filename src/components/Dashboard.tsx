@@ -73,6 +73,7 @@ import {
   CheckCircleIcon,
   StarIcon,
 } from '@heroicons/react/24/outline'
+import { fetchAuditLogs, logAuditEventFromClient } from '@/lib/auditLogs'
 import { fetchCurrentUserIsAdmin } from '@/lib/admin'
 import {
   MAX_JOB_PDF_BYTES,
@@ -83,6 +84,7 @@ import {
   uploadErrataForJob,
 } from '@/lib/jobs'
 import { getSupabase } from '@/lib/supabase'
+import type { AuditLogRow } from '@/types/auditLog'
 import type { AdminJobListRow, JobListRow } from '@/types/job'
 
 export type DashboardOutletContext = {
@@ -101,6 +103,11 @@ function formatDateCell(value: string | null): string {
     return new Date(`${value}T12:00:00`).toLocaleDateString()
   }
   return new Date(value).toLocaleDateString()
+}
+
+function formatDateTimeCell(value: string | null): string {
+  if (!value) return '—'
+  return new Date(value).toLocaleString()
 }
 
 function formatTranscriptSizeKb(value: number | null): string {
@@ -226,6 +233,7 @@ type UploadErrataFormValues = z.infer<typeof uploadErrataSchema>
 function dashboardPageTitle(pathname: string): string {
   if (pathname.endsWith('/create')) return 'Create a job'
   if (pathname.endsWith('/all-jobs')) return 'All jobs'
+  if (pathname.endsWith('/audit-logs')) return 'Audit logs'
   if (pathname.endsWith('/upload-errata')) return 'Upload errata PDF'
   if (pathname.endsWith('/help')) return 'Request help'
   return 'Your jobs'
@@ -260,11 +268,18 @@ export function Dashboard({ user }: { user: User }) {
   const matchJobs = useMatch({ path: '/dashboard', end: true })
   const matchCreate = useMatch('/dashboard/create')
   const matchAllJobs = useMatch('/dashboard/all-jobs')
+  const matchAuditLogs = useMatch('/dashboard/audit-logs')
   const matchUploadErrata = useMatch('/dashboard/upload-errata')
   const matchHelp = useMatch('/dashboard/help')
 
   async function handleSignOut() {
     const supabase = getSupabase()
+    await logAuditEventFromClient({
+      action: 'auth.sign_out',
+      table_name: 'auth.users',
+      record_id: null,
+      ip_address: null,
+    })
     await supabase.auth.signOut()
     toast.success('Signed out')
   }
@@ -297,6 +312,11 @@ export function Dashboard({ user }: { user: User }) {
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild isActive={!!matchAllJobs}>
                         <NavLink to="/dashboard/all-jobs">All Jobs</NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={!!matchAuditLogs}>
+                        <NavLink to="/dashboard/audit-logs">Audit logs</NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
@@ -428,6 +448,21 @@ export function DashboardUploadErrataRoute() {
   return <UploadErrataPanel />
 }
 
+export function DashboardAuditLogsRoute() {
+  const { isAdmin, adminLoading } = useDashboardOutlet()
+
+  if (adminLoading) {
+    return (
+      <p className="text-xs text-muted-foreground">Checking access…</p>
+    )
+  }
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <AuditLogsTablePanel />
+}
+
 export function DashboardHelpRoute() {
   const { user } = useDashboardOutlet()
   return <HelpPanel userEmail={user.email ?? ''} />
@@ -536,6 +571,106 @@ function JobsTablePanel({
               ))}
             </TableBody>
           </Table>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function AuditLogsTablePanel() {
+  const [rows, setRows] = useState<AuditLogRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await fetchAuditLogs()
+      setRows(data)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not load audit logs.'
+      setError(msg)
+      toast.error('Failed to load audit logs', { description: msg })
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  return (
+    <Card className="w-full max-w-6xl">
+      <CardHeader>
+        <CardTitle>Audit logs</CardTitle>
+        <CardDescription>
+          Recent security and data events (admin only). Includes Auth
+          (sign-in/sign-out from the app, new auth users and profiles from
+          database triggers) plus other events via log_audit_event.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {error ? (
+          <div className="flex flex-wrap items-center gap-2 text-xs text-destructive">
+            <span>{error}</span>
+            <Button type="button" size="sm" variant="outline" onClick={() => void load()}>
+              Retry
+            </Button>
+          </div>
+        ) : null}
+        {loading ? (
+          <p className="text-xs text-muted-foreground">Loading audit logs…</p>
+        ) : rows.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No audit log entries yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="whitespace-nowrap">Event time</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Table</TableHead>
+                  <TableHead>Record</TableHead>
+                  <TableHead className="whitespace-nowrap">IP</TableHead>
+                  <TableHead className="min-w-[12rem]">User agent</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="whitespace-nowrap text-xs">
+                      {formatDateTimeCell(row.event_time)}
+                    </TableCell>
+                    <TableCell className="max-w-[10rem] truncate font-mono text-xs">
+                      {row.user_id ?? '—'}
+                    </TableCell>
+                    <TableCell className="max-w-[8rem] truncate text-xs">
+                      {row.role ?? '—'}
+                    </TableCell>
+                    <TableCell className="max-w-[12rem] truncate text-xs">
+                      {row.action}
+                    </TableCell>
+                    <TableCell className="max-w-[10rem] truncate text-xs">
+                      {row.table_name ?? '—'}
+                    </TableCell>
+                    <TableCell className="max-w-[10rem] truncate font-mono text-xs">
+                      {row.record_id ?? '—'}
+                    </TableCell>
+                    <TableCell className="max-w-[8rem] truncate text-xs">
+                      {row.ip_address ?? '—'}
+                    </TableCell>
+                    <TableCell className="max-w-[18rem] truncate text-xs" title={row.user_agent ?? ''}>
+                      {row.user_agent ?? '—'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

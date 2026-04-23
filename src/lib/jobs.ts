@@ -1,3 +1,4 @@
+import { logAuditEventFromClient } from '@/lib/auditLogs'
 import { getSupabase } from '@/lib/supabase'
 import type { AdminJobListRow, JobListRow } from '@/types/job'
 
@@ -119,6 +120,13 @@ export async function createJob(input: CreateJobInput): Promise<void> {
 
   const jobId = inserted.id as number
   const file = input.file
+
+  await logAuditEventFromClient({
+    action: 'job_created',
+    table_name: 'jobs',
+    record_id: String(jobId),
+    ip_address: null,
+  })
 
   if (!file) {
     return

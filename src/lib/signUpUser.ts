@@ -1,8 +1,7 @@
 import { getSupabase } from '@/lib/supabase'
 
 export type SignUpUserInput = {
-  first_name: string
-  last_name: string
+  full_name: string
   email: string
   password: string
   organization?: string
@@ -25,7 +24,7 @@ function friendlyError(message: string): string {
  * disable email confirmation for local testing.
  */
 export async function signUpWithUserProfile(
-  input: SignUpUserInput
+  input: SignUpUserInput,
 ): Promise<{ needsEmailConfirmation: boolean }> {
   const supabase = getSupabase()
 
@@ -34,8 +33,7 @@ export async function signUpWithUserProfile(
     password: input.password,
     options: {
       data: {
-        first_name: input.first_name,
-        last_name: input.last_name,
+        full_name: input.full_name,
         organization: input.organization ?? null,
         csr_num: input.csr_num ?? null,
         notes: input.notes ?? null,
@@ -56,8 +54,7 @@ export async function signUpWithUserProfile(
   const row: {
     user_id: string
     email: string
-    first_name: string
-    last_name: string
+    full_name: string
     organization?: string
     csr_num?: string
     notes?: string
@@ -65,8 +62,7 @@ export async function signUpWithUserProfile(
   } = {
     user_id: user.id,
     email: input.email,
-    first_name: input.first_name,
-    last_name: input.last_name,
+    full_name: input.full_name,
   }
 
   if (input.organization) row.organization = input.organization

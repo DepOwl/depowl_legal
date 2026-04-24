@@ -21,8 +21,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export const signUpFormSchema = z.object({
-  first_name: z.string().trim().min(1, 'First name is required'),
-  last_name: z.string().trim().min(1, 'Last name is required'),
+  full_name: z.string().trim().min(1, 'Full name is required'),
   email: z
     .string()
     .trim()
@@ -39,8 +38,7 @@ export const signUpFormSchema = z.object({
 export type SignUpFormValues = z.infer<typeof signUpFormSchema>
 
 const defaultValues: SignUpFormValues = {
-  first_name: '',
-  last_name: '',
+  full_name: '',
   email: '',
   password: '',
   organization: '',
@@ -75,8 +73,7 @@ export function SignUpForm({ className, onSuccess }: SignUpFormProps) {
           const csr = values.csr_num.trim()
           const notes = values.notes.trim()
           const { needsEmailConfirmation } = await signUpWithUserProfile({
-            first_name: values.first_name.trim(),
-            last_name: values.last_name.trim(),
+            full_name: values.full_name.trim(),
             email: values.email.trim(),
             password: values.password,
             ...(org !== '' ? { organization: org } : {}),
@@ -107,42 +104,22 @@ export function SignUpForm({ className, onSuccess }: SignUpFormProps) {
         </p>
 
         <FieldGroup className="gap-4">
-          <Field data-invalid={!!errors.first_name}>
-            <FieldLabel htmlFor="signup-first-name">
-              First name <span className="text-destructive">*</span>
+          <Field data-invalid={!!errors.full_name}>
+            <FieldLabel htmlFor="signup-full-name">
+              Full name <span className="text-destructive">*</span>
             </FieldLabel>
             <FieldContent>
               <Input
-                id="signup-first-name"
+                id="signup-full-name"
                 type="text"
-                autoComplete="given-name"
+                autoComplete="name"
                 aria-required={true}
-                aria-invalid={!!errors.first_name}
-                placeholder="Jane"
-                {...register('first_name')}
+                aria-invalid={!!errors.full_name}
+                placeholder="Jane Doe"
+                {...register('full_name')}
               />
               <FieldError
-                errors={errors.first_name ? [errors.first_name] : undefined}
-              />
-            </FieldContent>
-          </Field>
-
-          <Field data-invalid={!!errors.last_name}>
-            <FieldLabel htmlFor="signup-last-name">
-              Last name <span className="text-destructive">*</span>
-            </FieldLabel>
-            <FieldContent>
-              <Input
-                id="signup-last-name"
-                type="text"
-                autoComplete="family-name"
-                aria-required={true}
-                aria-invalid={!!errors.last_name}
-                placeholder="Doe"
-                {...register('last_name')}
-              />
-              <FieldError
-                errors={errors.last_name ? [errors.last_name] : undefined}
+                errors={errors.full_name ? [errors.full_name] : undefined}
               />
             </FieldContent>
           </Field>

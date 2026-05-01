@@ -108,7 +108,7 @@ export function AuthGate() {
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
             </form>
-            <Button
+            {/* <Button
               type="button"
               variant="ghost"
               className="mt-4 w-full"
@@ -118,7 +118,7 @@ export function AuthGate() {
               }}
             >
               Need an account? Create one
-            </Button>
+            </Button> */}
           </CardContent>
         </Card>
       )}

@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.vite/
 
 # Environment — do not commit secrets to GitHub, GitLab, etc.
 .env

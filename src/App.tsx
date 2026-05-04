@@ -11,7 +11,7 @@ import {
   DashboardHelpRoute,
   DashboardJobsRoute,
   DashboardUploadErrataRoute,
-} from '@/components/Dashboard'
+} from '@/components/dashboard'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { getSupabase } from '@/lib/supabase'

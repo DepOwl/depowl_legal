@@ -135,7 +135,7 @@ function Step1Fields({ register, errors, isSubmitting, onNext }: Step1Props) {
             {...register('csr_num')}
           />
           <FieldDescription>
-            Optional. Uniqueness should be enforced in the database.
+            Your court reporter number is optional.
           </FieldDescription>
           <FieldError errors={errors.csr_num ? [errors.csr_num] : undefined} />
         </FieldContent>

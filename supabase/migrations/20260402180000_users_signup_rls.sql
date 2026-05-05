@@ -28,12 +28,11 @@ using (auth.uid() = user_id);
 -- set search_path = public
 -- as $$
 -- begin
---   insert into public.users (user_id, email, first_name, last_name, organization, csr_num, notes)
+--   insert into public.users (user_id, email, full_name, organization, csr_num, notes)
 --   values (
 --     new.id,
 --     new.email,
---     nullif(btrim(coalesce(new.raw_user_meta_data->>'first_name', '')), ''),
---     nullif(btrim(coalesce(new.raw_user_meta_data->>'last_name', '')), ''),
+--     nullif(btrim(coalesce(new.raw_user_meta_data->>'full_name', '')), ''),
 --     nullif(btrim(coalesce(new.raw_user_meta_data->>'organization', '')), ''),
 --     nullif(btrim(coalesce(new.raw_user_meta_data->>'csr_num', '')), ''),
 --     nullif(btrim(coalesce(new.raw_user_meta_data->>'notes', '')), '')

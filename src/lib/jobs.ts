@@ -121,14 +121,13 @@ export async function createJob(input: CreateJobInput): Promise<void> {
   const jobId = inserted.id as number
   const file = input.file
 
-  await logAuditEventFromClient({
-    action: 'job_created',
-    table_name: 'jobs',
-    record_id: String(jobId),
-    ip_address: null,
-  })
-
   if (!file) {
+    await logAuditEventFromClient({
+      action: 'job_created',
+      table_name: 'jobs',
+      record_id: String(jobId),
+      ip_address: null,
+    })
     return
   }
 
@@ -165,17 +164,16 @@ export async function createJob(input: CreateJobInput): Promise<void> {
     await supabase.from('jobs').delete().eq('id', jobId)
     throw new Error(updateError.message)
   }
+
+  await logAuditEventFromClient({
+    action: 'job_created',
+    table_name: 'jobs',
+    record_id: String(jobId),
+    ip_address: null,
+  })
 }
 
 const ERRATA_OBJECT_NAME = 'errata.pdf'
-
-function localDateStringForPostgres(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 export type UploadErrataInput = {
   jobId: number
@@ -224,7 +222,8 @@ export async function uploadErrataForJob(input: UploadErrataInput): Promise<void
       errata_path: objectPath,
       errata_name: errataName,
       status: 'ready_for_download',
-      ready_date: localDateStringForPostgres(),
+      // Postgres resolves the special date literal "now" using server time.
+      ready_date: 'now',
     })
     .eq('id', row.id)
 

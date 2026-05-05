@@ -4,6 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      ;(function () {
+        var locationRef = window.location
+        if (locationRef.search[1] === '/') {
+          var decoded = locationRef.search
+            .slice(1)
+            .split('&')
+            .map(function (segment) {
+              return segment.replace(/~and~/g, '&')
+            })
+            .join('?')
+          window.history.replaceState(
+            null,
+            null,
+            locationRef.pathname.slice(0, -1) + decoded + locationRef.hash,
+          )
+        }
+      })()
+    </script>
     <title>DepOwl</title>
   </head>
   <body>

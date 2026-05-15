@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
   const resendFromEmail = Deno.env.get('RESEND_FROM_EMAIL') ?? ''
   const errataBucket =
     normalizeText(Deno.env.get('ERRATA_BUCKET')) || DEFAULT_ERRATA_BUCKET
-  const webhookSecret = Deno.env.get('ERRATA_WEBHOOK_SECRET') ?? ''
+  const webhookSecret = normalizeText(Deno.env.get('ERRATA_WEBHOOK_SECRET') ?? '')
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
   const serviceRoleKey =
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ??
@@ -149,7 +149,8 @@ Deno.serve(async (req) => {
     )
   }
 
-  if (req.headers.get('x-webhook-secret') !== webhookSecret) {
+  const headerSecret = normalizeText(req.headers.get('x-webhook-secret'))
+  if (headerSecret !== webhookSecret) {
     return jsonResponse({ error: 'Unauthorized' }, 401)
   }
 

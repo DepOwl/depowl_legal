@@ -1,11 +1,14 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-/** Plain POST body or Supabase Database Webhook INSERT payload (`record` holds the new row). */
-type JobUploadedRequest = {
-  user_id?: string
+/** Supabase Database Webhook payload for `INSERT` on `public.jobs`. */
+type JobsInsertWebhookPayload = {
+  type?: string
+  table?: string
+  schema?: string
   record?: {
     user_id?: string
-  }
+  } | null
+  old_record?: unknown
 }
 
 type UserRow = {
@@ -21,6 +24,10 @@ function jsonResponse(body: unknown, status = 200): Response {
     status,
     headers: { 'Content-Type': 'application/json' },
   })
+}
+
+function normalizeToken(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase()
 }
 
 async function sendResendEmail(input: {
@@ -57,29 +64,64 @@ Deno.serve(async (req) => {
 
   const resendApiKey = Deno.env.get('RESEND_API_KEY') ?? ''
   const resendFromEmail = Deno.env.get('RESEND_FROM_EMAIL') ?? ''
+  const webhookSecret = Deno.env.get('JOB_UPLOADED_WEBHOOK_SECRET') ?? ''
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
   const serviceRoleKey =
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ??
     Deno.env.get('SUPABASE_SERVICE_ROLE') ??
     ''
 
-  if (!resendApiKey || !resendFromEmail || !supabaseUrl || !serviceRoleKey) {
+  if (
+    !resendApiKey ||
+    !resendFromEmail ||
+    !webhookSecret ||
+    !supabaseUrl ||
+    !serviceRoleKey
+  ) {
     return jsonResponse(
       { error: 'Missing required server environment variables' },
       500,
     )
   }
 
-  let payload: JobUploadedRequest
+  if (req.headers.get('x-webhook-secret') !== webhookSecret) {
+    return jsonResponse({ error: 'Unauthorized' }, 401)
+  }
+
+  let payload: JobsInsertWebhookPayload
   try {
-    payload = (await req.json()) as JobUploadedRequest
+    payload = (await req.json()) as JobsInsertWebhookPayload
   } catch {
     return jsonResponse({ error: 'Invalid JSON body' }, 400)
   }
 
-  const userId = (payload.user_id ?? payload.record?.user_id ?? '').trim()
+  if (normalizeToken(payload.type) !== 'insert') {
+    return jsonResponse(
+      { error: 'Expected a database INSERT webhook payload' },
+      400,
+    )
+  }
+
+  if (normalizeToken(payload.table) !== 'jobs') {
+    return jsonResponse(
+      { error: 'Expected webhook payload for table jobs' },
+      400,
+    )
+  }
+
+  if (payload.schema !== undefined && normalizeToken(payload.schema) !== 'public') {
+    return jsonResponse(
+      { error: 'Expected webhook payload for schema public' },
+      400,
+    )
+  }
+
+  const userId = (payload.record?.user_id ?? '').trim()
   if (!userId) {
-    return jsonResponse({ error: 'Missing required field: user_id' }, 400)
+    return jsonResponse(
+      { error: 'Missing required field: record.user_id' },
+      400,
+    )
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey)

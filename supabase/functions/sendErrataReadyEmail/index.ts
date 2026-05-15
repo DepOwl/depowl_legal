@@ -42,6 +42,16 @@ function normalizeText(value: string | null | undefined): string {
   return (value ?? '').trim()
 }
 
+/** Escape text for HTML body content (e.g. user-controlled `full_name`). */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = ''
   const chunkSize = 0x8000
@@ -233,8 +243,10 @@ Deno.serve(async (req) => {
   const attachmentBase64 = bytesToBase64(bytes)
   const attachmentName = buildAttachmentName(record)
   const ownerName = normalizeText(jobOwner.full_name)
-  const greeting = ownerName ? `Hi ${ownerName},` : 'Hello,'
-  const html = `<p>${greeting}</p><p>${ERRATA_READY_TEXT}</p>`
+  const greetingPlain = ownerName ? `Hi ${ownerName},` : 'Hello,'
+  const greetingHtml = ownerName ? `Hi ${escapeHtml(ownerName)},` : 'Hello,'
+  const html = `<p>${greetingHtml}</p><p>${escapeHtml(ERRATA_READY_TEXT)}</p>`
+  const text = `${greetingPlain}\n\n${ERRATA_READY_TEXT}`
 
   try {
     await sendResendEmail({
@@ -242,7 +254,7 @@ Deno.serve(async (req) => {
       from: resendFromEmail,
       to: ownerEmail,
       subject: ERRATA_READY_SUBJECT,
-      text: ERRATA_READY_TEXT,
+      text,
       html,
       attachmentName,
       attachmentBase64,

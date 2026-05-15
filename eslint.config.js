@@ -9,6 +9,7 @@ export default defineConfig([
   globalIgnores(['dist']),
   {
     files: ['**/*.{ts,tsx}'],
+    ignores: ['supabase/functions/**'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -34,6 +35,14 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+  },
+  {
+    files: ['supabase/functions/**/*.ts'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.denoBuiltin,
     },
   },
 ])
